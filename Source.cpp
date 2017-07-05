@@ -8,10 +8,14 @@ void Problem1_2014();
 void Problem2_2014();
 void Problem3_2014();
 class problem3_building {
-public:
+private:
 	int x_left, x_right, height;
+public:
 	problem3_building();
 	problem3_building(int x_left, int x_right, int height);
+	int getxleft();
+	int getxright();
+	int getheight();
 };
 problem3_building::problem3_building() {
 	x_left = 0;
@@ -23,12 +27,30 @@ problem3_building::problem3_building(int x_left, int x_right, int height) {
 	this->x_right = x_right;
 	this->height = height;
 }
+int problem3_building::getxleft() {
+	return x_left;
+}
+int problem3_building::getxright() {
+	return x_right;
+}
+int problem3_building::getheight() {
+	return height;
+}
 class problem3_Sun {
-public:
+private:
 	int x, r;
 	double y;
+	double getY(double x);
+	
+public:
 	problem3_Sun();
 	problem3_Sun(int r);
+	void addY(double dy);
+	double getY() { return this->y; }
+	int getR() {return this->r;}
+	double getX(double y);
+	int isBlockOffSunLight(problem3_building b);
+	int isBlockOffSunLight(problem3_building b,double x);
 };
 problem3_Sun::problem3_Sun() {
 	x = 0;
@@ -40,10 +62,35 @@ problem3_Sun::problem3_Sun(int r) {
 	this->r = r;
 	this->y = (double)-r;
 }
+void problem3_Sun::addY(double dy) {
+	y += dy;
+}
+double problem3_Sun::getY(double x) {
+	return std::sqrt((double)r*r - x*x) + y;
+}
+double problem3_Sun::getX(double y) {
+	return std::sqrt((double)r*r-(y-this->y)*(y-this->y));
+}
+int problem3_Sun::isBlockOffSunLight(problem3_building b) {
+	if (getY((double)b.getxleft()) > b.getheight())
+		return 0;
+	if (getY((double)b.getxright()) > b.getheight())
+		return 0;
+	if (b.getxleft() < 0 && b.getxright()>0 && r + y > b.getheight())
+		return 0;
+	return 1;
+}
+int problem3_Sun::isBlockOffSunLight(problem3_building b, double x) {
+	if (b.getxleft() <= x && b.getxright() >= x&& b.getheight() >= getY(x))
+		return 1;
+	else
+		return 0;
+}
 int main() {
 	//Problem1_2007();
 	//Problem1_2014();
 	//Problem2_2014();
+	Problem3_2014();
 	return 0;
 }
 void Problem1_2007() {
@@ -183,20 +230,48 @@ void Problem2_2014() {
 	}
 	return;
 }
-void Problem3_2014() {
+void Problem3_2014() {//~
 	int r, buildNum;
 	int xr, xl, h;
+	double t;
+	double x;
 	problem3_building *build;
+	problem3_Sun sun;
+	int isblocksunlight;
+	std::vector<double> answer;
+	const int vy = 1;
+	const double dt = 0.001;
 	for (std::cin >> r >> buildNum; !(r == 0 && buildNum == 0); std::cin >> r >> buildNum) {
 		build = new problem3_building[buildNum];
-
+		sun =problem3_Sun(r);
+		isblocksunlight = true;
 		//ƒrƒ‹‚Ìî•ñ“ü—Í
 		for (int i = 0; i < buildNum; ++i) {
 			std::cin >> xl >> xr >> h;
 			build[i] = problem3_building(xl, xr, h);
 		}
-
-
-
+		for (t = 0.0;; t += dt) {
+			sun.addY((double)vy*dt);
+			for (double h = sun.getY() + sun.getR();h>0; h -= vy*dt) {
+				x = sun.getX(h);
+				isblocksunlight = true;
+				for (int i = 0; i < buildNum; ++i) {
+					if (!(sun.isBlockOffSunLight(build[i], x)&& sun.isBlockOffSunLight(build[i], -x))) {
+						isblocksunlight = false;
+						break;
+					}
+				}
+				if (!isblocksunlight){
+					break;
+				}
+			}
+			if (!isblocksunlight) {
+				break;
+			}
+		}
+		answer.push_back(t);
 	}
+	for (auto itr = answer.begin(); itr != answer.end(); ++itr)
+		std::cout << *itr << std::endl;
+	return;
 }
